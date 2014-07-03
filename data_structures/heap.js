@@ -5,7 +5,7 @@ CLRS
 */
 
 (function (window) {
-  var heap = [];
+  var heap = new Array();
 
   heap.parent = function (index) {
     return Math.floor(index / 2);
@@ -47,12 +47,32 @@ CLRS
   }
 
   heap.build_max_heap = function () {
-    var i,
-      max_heap = [];
+    var i;
     for (i = Math.floor(this.length / 2); i > 0; i--) {
-      max_heap = this.max_heapify(this, i);
+      this.max_heapify(i);
     }
-    return max_heap;
+    return this;
   }
 
+  heap.sort = function() {
+    var i,
+      temp,
+      sorted_heap = [];
+
+    this.build_max_heap();
+
+    for (i = heap.length; i > 0; i--) {
+      temp = this[0];
+      this[0] = this[i - 1];
+      this[i - 1] = temp;
+
+      sorted_heap.unshift(this.pop());
+
+      this.max_heapify(1);
+    }
+
+    return sorted_heap;
+  }
+
+  window.heap = heap;
 }(window));
