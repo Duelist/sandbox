@@ -1,12 +1,4 @@
 
-user_ratings = Dict()
-isbn_book_map = Dict()
-userid_location_map = Dict()
-location_userid_map = Dict()
-fn = pearson
-k = 1
-n = 5
-
 function loadUserRatings(path="")
   file = open(string(path, "BX-Book-Ratings.csv"))
   try
@@ -108,6 +100,14 @@ function pearson(rating1, rating2)
   end
 end
 
+user_ratings = Dict()
+isbn_book_map = Dict()
+userid_location_map = Dict()
+location_userid_map = Dict()
+fn = pearson
+k = 3
+n = 5
+
 function lt(first_item, second_item)
   return first_item[2] < second_item[2]
 end
@@ -126,7 +126,7 @@ end
 function transformRecommendations(recommendations)
   list = (ASCIIString, Float64)[]
   for pair in recommendations
-    push!(list, (pair[1], pair[2]))
+    push!(list, (isbn_book_map[pair[1]], pair[2]))
   end
   return list
 end
@@ -135,7 +135,6 @@ function recommend(user_id)
   recommendations = Dict()
   println("Getting nearest neighbours")
   nearest = computeNearestNeighbour(user_id)
-  @printf "Nearest: %s\n" nearest
   ratings = user_ratings[user_id]
   total_distance = 0.0
   println("Calculating total distance")
@@ -162,11 +161,10 @@ function recommend(user_id)
     end
   end
 
-  """
   recommendations = transformRecommendations(recommendations)
   recommendations = sort(recommendations, lt=lt, rev=true)
-  """
-  return recommendations
+
+  return recommendations[1:n]
 end
 
 function loadDataset(path="Desktop/projects/Julia/BX-Dump/")
