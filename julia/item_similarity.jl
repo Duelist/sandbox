@@ -57,3 +57,15 @@ function computeSimilarity(band1, band2, userRatings)
 
   return numerator / (sqrt(denominator1) * sqrt(denominator2))
 end
+
+function predict_user_rating(user, band, userRatings)
+  normalizeFn = rating -> normalizeRating(rating, 1, 5)
+  numerator = 0
+  denominator = 0
+  for rating in userRatings[user]
+    similarity = computeSimilarity(band, rating[1], userRatings)
+    numerator += similarity*normalizeFn(float(rating[2]))
+    denominator += abs(similarity)
+  end
+  return numerator / denominator
+end
