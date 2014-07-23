@@ -60,6 +60,7 @@ end
 
 function predict_user_rating(user, band, userRatings)
   normalizeFn = rating -> normalizeRating(rating, 1, 5)
+  denormalizeFn = rating -> denormalizeRating(rating, 1, 5)
   numerator = 0
   denominator = 0
   for rating in userRatings[user]
@@ -67,5 +68,5 @@ function predict_user_rating(user, band, userRatings)
     numerator += similarity*normalizeFn(float(rating[2]))
     denominator += abs(similarity)
   end
-  return numerator / denominator
+  return denormalizeFn(numerator / denominator)
 end
