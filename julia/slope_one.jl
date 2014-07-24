@@ -66,7 +66,7 @@ function slope_one_recommend(user_ratings, frequencies, deviations)
 end
 
 function transform_recommendations(recommendation_list, item_dict)
-  return map(x -> (item_dict[x[1]], x[2]), recommendation_list)
+  return [(item_dict[item_id], rating) for (item_id, rating) in recommendation_list]
 end
 
 function exec(user)
