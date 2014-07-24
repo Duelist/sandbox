@@ -9,8 +9,8 @@ function set_default(dictionary, key, default)
   return dict
 end
 
-function lt(first_item, second_item)
-  return first_item[2] < second_item[2]
+function lt(first, second)
+  return first[2] < second[2]
 end
 
 function compute_deviations(rating_dict)
@@ -26,7 +26,7 @@ function compute_deviations(rating_dict)
           frequencies[item] = set_default(frequencies[item], item2, 0)
           deviations[item] = set_default(deviations[item], item2, 0.0)
           frequencies[item][item2] += 1
-          deviations[item][item2] += rating - rating2
+          deviations[item][item2] += float(rating) - float(rating2)
         end
       end
     end
@@ -52,7 +52,7 @@ function slope_one_recommend(user_ratings, frequencies, deviations)
         freq = frequencies[other_item][user_item]
         set_default(recommendations, other_item, 0.0)
         set_default(freqs, other_item, 0)
-        recommendations[other_item] += (other_ratings[user_item] + user_rating) * freq
+        recommendations[other_item] += (other_ratings[user_item] + float(user_rating)) * freq
         freqs[other_item] += freq
       end
     end
@@ -62,8 +62,11 @@ function slope_one_recommend(user_ratings, frequencies, deviations)
     push!(recs, (key, value / freqs[key]))
   end
 
-  sort(recs, lt=lt, rev=true)
-  return recs
+  return sort(recs, lt=lt, rev=true)
+end
+
+function transform_recommendations(recommendation_list, item_dict)
+  return map(x -> (item_dict[x[1]], x[2]), recommendation_list)
 end
 
 function exec(user)
@@ -80,7 +83,6 @@ function exec(user)
   items = load_items("/Users/Duelist/Desktop/datasets/ml-100k/u.item", 1, 2, '|')
   toc()
 
-  """
   println("Computing deviations...")
   tic()
   frequencies, deviations = compute_deviations(ratings)
@@ -88,9 +90,8 @@ function exec(user)
 
   @printf "Gathering Slope One recommendations for %s...\n" user
   tic()
-  recommendations = slope_one_recommend(ratings[user], frequencies, deviations)
+  recommendations = transform_recommendations(slope_one_recommend(ratings[user], frequencies, deviations))
   toc()
 
-  @printf "\n Recommendation:\n %s\n" recommendations
-  """
+  @printf "\nRecommendations:\n%s\n" recommendations
 end
