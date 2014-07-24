@@ -1,17 +1,5 @@
 
-ratings = ["Amy" =>
-             ["Taylor Swift" => 4,
-              "PSY" => 3,
-              "Whitney Houston" => 4],
-           "Ben" =>
-             ["Taylor Swift" => 5,
-              "PSY" => 2],
-           "Clara" =>
-             ["PSY" => 3.5,
-              "Whitney Houston" => 4],
-           "Daisy" =>
-             ["Taylor Swift" => 5,
-              "Whitney Houston" => 3]]
+include("load_dataset.jl")
 
 function set_default(dictionary, key, default)
   dict = dictionary
@@ -32,7 +20,7 @@ function compute_deviations(rating_dict)
   for (user, ratings) in rating_dict
     for (item, rating) in ratings
       frequencies = set_default(frequencies, item, Dict())
-      deviations = set_default(deviations, item, Dict()) 
+      deviations = set_default(deviations, item, Dict())
       for (item2, rating2) in ratings
         if item != item2
           frequencies[item] = set_default(frequencies[item], item2, 0)
@@ -79,6 +67,20 @@ function slope_one_recommend(user_ratings, frequencies, deviations)
 end
 
 function exec(user)
+  println("Loading ratings...")
+  tic()
+  ratings = load_ratings("/Users/Duelist/Desktop/datasets/ml-100k/u.data", 1, 2, 3, '\t')
+  toc()
+  println("Loading users...")
+  tic()
+  users = load_users("/Users/Duelist/Desktop/datasets/ml-100k/u.user", 1, 5, '|')
+  toc()
+  println("Loading items...")
+  tic()
+  items = load_items("/Users/Duelist/Desktop/datasets/ml-100k/u.item", 1, 2, '|')
+  toc()
+
+  """
   println("Computing deviations...")
   tic()
   frequencies, deviations = compute_deviations(ratings)
@@ -90,4 +92,5 @@ function exec(user)
   toc()
 
   @printf "\n Recommendation:\n %s\n" recommendations
+  """
 end
