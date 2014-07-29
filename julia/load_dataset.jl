@@ -68,20 +68,24 @@ function load_items(path, item_id_field, item_name_field, delimiter, strip_chars
   return items_dict
 end
 
-function load_training_set(path, comment_field, class_field, data_fields, delimiter, strip_chars=[])
+function load_training_set(path, comment_field, class_field, data_fields, delimiter, strip_chars=[], header=false)
   training_vector = (ASCIIString, Array, ASCIIString)[]
   training_file = open(path)
 
   try
+    i = 0
     for line in eachline(training_file)
-      fields = split(line, delimiter)
-      comment = strip(strip(fields[comment_field]), strip_chars)
-      class = strip(strip(fields[class_field]), strip_chars)
-      data = ASCIIString[]
-      for data_field in data_fields
-        push!(data, strip(strip(fields[data_field]), strip_chars))
+      if !header || i > 0 
+        fields = split(line, delimiter)
+        comment = strip(strip(fields[comment_field]), strip_chars)
+        class = strip(strip(fields[class_field]), strip_chars)
+        data = ASCIIString[]
+        for data_field in data_fields
+          push!(data, strip(strip(fields[data_field]), strip_chars))
+        end
+        push!(training_vector, (class, data, comment))
       end
-      push!(training_vector, (class, data, comment))
+      i += 1
     end
   finally
     close(training_file)
