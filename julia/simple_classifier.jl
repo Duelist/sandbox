@@ -10,6 +10,10 @@ function absolute_standard_deviation(vector)
   return sum / length(vector)
 end
 
+function manhattan(vector1, vector2)
+  return sum(abs(vector1 - vector2)) 
+end
+
 function normalize_column(column_number, training_set)
   column_vector = Float64[float(td[2][column_number]) for td in training_set]
   normalized_column = Float64[]
@@ -31,7 +35,7 @@ function normalize_vector(vector, training_set)
 end
 
 function normalize_training_set(training_set)
-  normalized_training_set = training_set
+  normalized_training_set = deepcopy(training_set)
   normalized_columns = Array{Float64}[]
   data_length = length(training_set[1][2])
 
@@ -40,8 +44,15 @@ function normalize_training_set(training_set)
     push!(normalized_columns, normalized_column)
   end
 
-  for (class, data, comments) in normalized_training_set
-
+  for i in 1:length(normalized_training_set)
+    for j in 1:length(normalized_training_set[i][2])
+      normalized_training_set[i][2][j] = normalized_columns[j][i]
+    end
   end
-  return normalized_columns
+
+  return normalized_training_set
+end
+
+function nearest_neighbour(data, training_set)
+  return [(manhattan(data, item[2]), item) for item in training_set]
 end

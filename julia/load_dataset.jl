@@ -79,9 +79,9 @@ function load_training_set(path, comment_field, class_field, data_fields, delimi
         fields = split(line, delimiter)
         comment = strip(strip(fields[comment_field]), strip_chars)
         class = strip(strip(fields[class_field]), strip_chars)
-        data = ASCIIString[]
+        data = Float64[]
         for data_field in data_fields
-          push!(data, strip(strip(fields[data_field]), strip_chars))
+          push!(data, float(strip(strip(fields[data_field]), strip_chars)))
         end
         push!(training_vector, (class, data, comment))
       end
