@@ -14,6 +14,16 @@ function manhattan(vector1, vector2)
   return sum(abs(vector1 - vector2)) 
 end
 
+function minimum_of_data(data)
+  min_point = (Inf, null)
+  for point in data
+    if point[1] < min_point[1]
+      min_point = point
+    end
+  end
+  return min_point
+end
+
 function normalize_column(column_number, training_set)
   column_vector = Float64[float(td[2][column_number]) for td in training_set]
   normalized_column = Float64[]
@@ -54,5 +64,24 @@ function normalize_training_set(training_set)
 end
 
 function nearest_neighbour(data, training_set)
-  return [(manhattan(data, item[2]), item) for item in training_set]
+  nearest_neighbour_list = (Float64, (ASCIIString, Array{Float64}))[]
+  for item in training_set
+    push!(nearest_neighbour_list, (manhattan(data, item[2]), item)) 
+  end
+  return minimum_of_data(nearest_neighbour_list)
+end
+
+function test_dataset(training_set, test_set)
+  results = (Float64, (ASCIIString, Array{Float64}))[]
+  correct = 0
+  total = length(test_set)
+  for test in test_set
+    push!(results, nearest_neighbour(test[2], training_set))
+  end
+  for (i, item) in enumerate(test_set)
+    if results[i][2][1] == item[1]
+      correct += 1
+    end
+  end
+  return correct/total * 100
 end
