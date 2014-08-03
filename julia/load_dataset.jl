@@ -68,8 +68,8 @@ function load_items(path, item_id_field, item_name_field, delimiter, strip_chars
   return items_dict
 end
 
-function load_training_set(path, comment_field, class_field, data_fields, delimiter, strip_chars=[], header=false)
-  training_vector = (ASCIIString, Array, ASCIIString)[]
+function load_training_set(path, class_field, data_fields, delimiter, header=false, format=(ASCIIString, Array{Float64}))
+  training_vector = format[]
   training_file = open(path)
 
   try
@@ -77,13 +77,12 @@ function load_training_set(path, comment_field, class_field, data_fields, delimi
     for line in eachline(training_file)
       if !header || i > 0 
         fields = split(line, delimiter)
-        comment = strip(strip(fields[comment_field]), strip_chars)
-        class = strip(strip(fields[class_field]), strip_chars)
+        class = strip(fields[class_field])
         data = Float64[]
         for data_field in data_fields
-          push!(data, float(strip(strip(fields[data_field]), strip_chars)))
+          push!(data, float(strip(fields[data_field])))
         end
-        push!(training_vector, (class, data, comment))
+        push!(training_vector, (class, data))
       end
       i += 1
     end
@@ -92,4 +91,41 @@ function load_training_set(path, comment_field, class_field, data_fields, delimi
   end
 
   return training_vector
+end
+
+function split_data_by_class(training_set, format=(Array{Float64}))
+  class_dict = Dict()
+  for (class, data) in training_set
+    set_default(class_dict, class, format[])
+    push!(class_dict[class], data)
+  end
+  return class_dict
+end
+
+function n_fold(number_of_chunks, training_set, format=(ASCIIString, Array{Float64}))
+  split_data = format[]
+  chunk_size = length(training_set) / number_of_chunks
+  training_dict = split_data_by_class(training_set)
+  classes = collect(keys(training_dict))
+
+  i = 0
+  j = 1
+  while i != -1
+    if length(filter(x -> isempty(x), collect(values(training_dict)))) == 0
+      i = -1
+    else
+      if !isempty(training_dict[classes[(i % length(classes)) + 1]])
+        data = pop!(training_dict[classes[(i % length(classes)) + 1]])
+        if length(split_data[j]) >= chunk_size
+          push!(split_data, [])
+          j += 1
+        end
+        push!(split_data[j], data) 
+      end
+
+      i += 1
+    end
+  end
+
+  return split_data
 end
