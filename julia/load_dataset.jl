@@ -102,7 +102,7 @@ function split_data_by_class(training_set, format=(Array{Float64}))
   return class_dict
 end
 
-function n_fold(number_of_chunks, training_set, format=(ASCIIString, Array{Float64}))
+function n_fold(number_of_chunks, training_set, format=Array{Array{Float64}})
   split_data = format[]
   chunk_size = length(training_set) / number_of_chunks
   training_dict = split_data_by_class(training_set)
@@ -110,19 +110,19 @@ function n_fold(number_of_chunks, training_set, format=(ASCIIString, Array{Float
 
   i = 0
   j = 1
+  push!(split_data, Array{Float64}[])
   while i != -1
-    if length(filter(x -> isempty(x), collect(values(training_dict)))) == 0
+    if length(filter(x -> !isempty(x), collect(values(training_dict)))) == 0
       i = -1
     else
       if !isempty(training_dict[classes[(i % length(classes)) + 1]])
         data = pop!(training_dict[classes[(i % length(classes)) + 1]])
         if length(split_data[j]) >= chunk_size
-          push!(split_data, [])
+          push!(split_data, Array{Float64}[])
           j += 1
         end
         push!(split_data[j], data) 
       end
-
       i += 1
     end
   end
