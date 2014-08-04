@@ -1,11 +1,5 @@
 
-function set_default(dictionary, key, default)
-  dict = dictionary
-  if !haskey(dict, key)
-    dict[key] = default
-  end
-  return dict
-end
+include("utility.jl")
 
 function load_ratings(path, user_id_field, item_id_field, rating_field, delimiter, strip_chars=[])
   ratings_dict = Dict()
@@ -102,7 +96,46 @@ function split_data_by_class(training_set, format=(Array{Float64}))
   return class_dict
 end
 
-function n_fold(number_of_chunks, training_set, format=Array{Array{Float64}})
+function normalize_column(column_number, training_set)
+  column_vector = Float64[float(td[2][column_number]) for td in training_set]
+  normalized_column = Float64[]
+  column_median = median(column_vector)
+  column_std = absolute_standard_deviation(column_vector)
+  for value in column_vector
+    push!(normalized_column, (value - column_median) / column_std) 
+  end
+  return normalized_column, (column_median, column_std)
+end
+
+function normalize_vector(vector, training_set)
+  normalized_vector = Float64[]
+  for i in 1:length(vector)
+    normalized_column, column_mean_std = normalize_column(i, training_set)
+    push!(normalized_vector, (vector[i] - column_mean_std[1]) / column_mean_std[2])
+  end
+  return normalized_vector
+end
+
+function normalize_training_set(training_set)
+  normalized_training_set = deepcopy(training_set)
+  normalized_columns = Array{Float64}[]
+  data_length = length(training_set[1][2])
+
+  for i in 1:data_length
+    normalized_column, column_mean_std = normalize_column(i, training_set)
+    push!(normalized_columns, normalized_column)
+  end
+
+  for i in 1:length(normalized_training_set)
+    for j in 1:length(normalized_training_set[i][2])
+      normalized_training_set[i][2][j] = normalized_columns[j][i]
+    end
+  end
+
+  return normalized_training_set
+end
+
+function n_fold(number_of_chunks, training_set, format=Array{(ASCIIString, Array{Float64})})
   split_data = format[]
   chunk_size = length(training_set) / number_of_chunks
   training_dict = split_data_by_class(training_set)
@@ -110,18 +143,19 @@ function n_fold(number_of_chunks, training_set, format=Array{Array{Float64}})
 
   i = 0
   j = 1
-  push!(split_data, Array{Float64}[])
+  push!(split_data, (ASCIIString, Array{Float64})[])
   while i != -1
     if length(filter(x -> !isempty(x), collect(values(training_dict)))) == 0
       i = -1
     else
-      if !isempty(training_dict[classes[(i % length(classes)) + 1]])
-        data = pop!(training_dict[classes[(i % length(classes)) + 1]])
+      current_class  = classes[(i % length(classes)) + 1]
+      if !isempty(training_dict[current_class])
+        data = pop!(training_dict[current_class])
         if length(split_data[j]) >= chunk_size
-          push!(split_data, Array{Float64}[])
+          push!(split_data, (ASCIIString, Array{Float64})[])
           j += 1
         end
-        push!(split_data[j], data) 
+        push!(split_data[j], (current_class, data)) 
       end
       i += 1
     end
