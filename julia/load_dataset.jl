@@ -163,3 +163,12 @@ function n_fold(number_of_chunks, training_set, format=Array{(ASCIIString, Array
 
   return split_data
 end
+
+function get_training_folds(test_fold, training_set)
+  training_folds = deepcopy(training_set)
+  indices = findin(test_fold, training_folds)
+  for index in indices
+    splice!(training_folds, index)
+  end
+  return training_folds
+end

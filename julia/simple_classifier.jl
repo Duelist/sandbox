@@ -23,3 +23,18 @@ function test_dataset(training_set, test_set)
   end
   return correct/total * 100
 end
+
+function test_fold(fold, training_set)
+  results = Dict()
+  split_data = n_fold(10, training_set)
+  training_folds = get_training_folds(split_data[fold], training_set)
+  for data in split_data[fold]
+    real_class = data[1]
+    classified = nearest_neighbour(data[2], training_folds)
+    classified_class = classified[2][1]
+    set_default(results, real_class, Dict())
+    set_default(results[real_class], classified_class, 0)
+    results[real_class][classified_class] += 1
+  end
+  return results
+end
