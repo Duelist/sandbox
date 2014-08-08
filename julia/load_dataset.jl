@@ -166,8 +166,8 @@ end
 
 function get_training_folds(test_fold, training_set)
   training_folds = deepcopy(training_set)
-  indices = findin(test_fold, training_folds)
-  for index in indices
+  for element in test_fold
+    index = findfirst(training_folds, element)
     splice!(training_folds, index)
   end
   return training_folds
