@@ -24,10 +24,10 @@ function test_dataset(training_set, test_set)
   return correct/total * 100
 end
 
-function test_fold(fold, training_set)
+function test_fold(fold, split_data)
   results = Dict()
-  split_data = n_fold(10, training_set)
-  training_folds = get_training_folds(split_data[fold], training_set)
+  training_folds = deepcopy(split_data)
+  splice!(training_folds, fold)
   for data in split_data[fold]
     real_class = data[1]
     classified = nearest_neighbour(data[2], training_folds)
@@ -37,4 +37,12 @@ function test_fold(fold, training_set)
     results[real_class][classified_class] += 1
   end
   return results
+end
+
+function test_n_folds(number_of_folds, training_set)
+  results = Dict()
+  split_data = n_fold(number_of_folds, training_set)
+  for i in 1:number_of_folds
+    
+  end
 end
