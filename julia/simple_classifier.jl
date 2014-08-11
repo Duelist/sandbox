@@ -26,16 +26,24 @@ end
 
 function test_fold(fold, split_data)
   results = Dict()
-  training_folds = deepcopy(split_data)
-  splice!(training_folds, fold)
-  for data in split_data[fold]
-    real_class = data[1]
-    classified = nearest_neighbour(data[2], training_folds)
+  temp_folds = deepcopy(split_data)
+  splice!(temp_folds, fold)
+  training_folds = (ASCIIString, Array{Float64})[];
+
+  for temp_fold in temp_folds
+    for data in temp_fold
+      push!(training_folds, data)
+    end
+  end
+
+  for (real_class, data) in split_data[fold]
+    classified = nearest_neighbour(data, training_folds)
     classified_class = classified[2][1]
     set_default(results, real_class, Dict())
     set_default(results[real_class], classified_class, 0)
     results[real_class][classified_class] += 1
   end
+
   return results
 end
 
@@ -43,6 +51,23 @@ function test_n_folds(number_of_folds, training_set)
   results = Dict()
   split_data = n_fold(number_of_folds, training_set)
   for i in 1:number_of_folds
-    
+    test = test_fold(i, split_data)
+    for (real_class, predictions) in test
+      set_default(results, real_class, Dict())
+      for (predicted_class, count) in predictions
+        set_default(results[real_class], predicted_class, 0)
+        results[real_class][predicted_class] += count
+      end
+    end
+  end
+  return results
+end
+
+function pretty_results(results)
+  for (real_class, predictions) in results
+    @printf "Predicition counts for %s:\n" real_class
+    for (predicted_class, count) in predictions
+      @printf "\t%s => %s\n" predicted_class count
+    end
   end
 end
