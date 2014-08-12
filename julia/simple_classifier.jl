@@ -1,12 +1,13 @@
 
 include("utility.jl")
 
-function nearest_neighbour(data, training_set)
+function knn(data, training_set, k=3)
   nearest_neighbour_list = (Float64, (ASCIIString, Array{Float64}))[]
   for item in training_set
     push!(nearest_neighbour_list, (manhattan(data, item[2]), item)) 
   end
-  return minimum_of_data(nearest_neighbour_list)
+  # TODO: Return most prominent class instead of list!
+  return slice(sort(nearest_neighbour_list, lt=distance_lt), 1:k)
 end
 
 function test_dataset(training_set, test_set)
@@ -14,7 +15,7 @@ function test_dataset(training_set, test_set)
   correct = 0
   total = length(test_set)
   for test in test_set
-    push!(results, nearest_neighbour(test[2], training_set))
+    push!(results, knn(test[2], training_set))
   end
   for (i, item) in enumerate(test_set)
     if results[i][2][1] == item[1]
@@ -37,7 +38,7 @@ function test_fold(fold, split_data)
   end
 
   for (real_class, data) in split_data[fold]
-    classified = nearest_neighbour(data, training_folds)
+    classified = knn(data, training_folds)
     classified_class = classified[2][1]
     set_default(results, real_class, Dict())
     set_default(results[real_class], classified_class, 0)

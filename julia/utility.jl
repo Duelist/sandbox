@@ -58,12 +58,11 @@ function pearson(rating1, rating2)
   end
 end
 
-function minimum_of_data(data)
-  min_point = (Inf, null)
-  for point in data
-    if point[1] < min_point[1]
-      min_point = point
-    end
-  end
-  return min_point
+function distance_lt(data1, data2)
+  return data1[1] < data2[1]
+end
+
+function minimum_of_data(data, k=1)
+  sorted = sort(data)
+  return slice(sorted, 1:k)
 end
