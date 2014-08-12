@@ -6,8 +6,15 @@ function knn(data, training_set, k=3)
   for item in training_set
     push!(nearest_neighbour_list, (manhattan(data, item[2]), item)) 
   end
-  # TODO: Return most prominent class instead of list!
-  return slice(sort(nearest_neighbour_list, lt=distance_lt), 1:k)
+
+  neighbour_count = Dict()
+  neighbours = slice(sort(nearest_neighbour_list, lt=distance_lt), 1:k)
+  for (distance, neighbour) in neighbours
+    set_default(neighbour_count, neighbour[1], 0)
+    neighbour_count[neighbour[1]] += 1
+  end
+
+  return maximum([(x[2], x[1]) for x in neighbour_count])[2]
 end
 
 function test_dataset(training_set, test_set)
@@ -38,8 +45,7 @@ function test_fold(fold, split_data)
   end
 
   for (real_class, data) in split_data[fold]
-    classified = knn(data, training_folds)
-    classified_class = classified[2][1]
+    classified_class = knn(data, training_folds)
     set_default(results, real_class, Dict())
     set_default(results[real_class], classified_class, 0)
     results[real_class][classified_class] += 1

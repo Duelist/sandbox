@@ -62,7 +62,3 @@ function distance_lt(data1, data2)
   return data1[1] < data2[1]
 end
 
-function minimum_of_data(data, k=1)
-  sorted = sort(data)
-  return slice(sorted, 1:k)
-end
