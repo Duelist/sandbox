@@ -32,7 +32,7 @@ function test_dataset(training_set, test_set)
   return correct/total * 100
 end
 
-function test_fold(fold, split_data)
+function test_fold(fold, split_data, k=3)
   results = Dict()
   temp_folds = deepcopy(split_data)
   splice!(temp_folds, fold)
@@ -45,7 +45,7 @@ function test_fold(fold, split_data)
   end
 
   for (real_class, data) in split_data[fold]
-    classified_class = knn(data, training_folds)
+    classified_class = knn(data, training_folds, k)
     set_default(results, real_class, Dict())
     set_default(results[real_class], classified_class, 0)
     results[real_class][classified_class] += 1
@@ -54,11 +54,11 @@ function test_fold(fold, split_data)
   return results
 end
 
-function test_n_folds(number_of_folds, training_set)
+function test_n_folds(number_of_folds, training_set, k=3)
   results = Dict()
   split_data = n_fold(number_of_folds, training_set)
   for i in 1:number_of_folds
-    test = test_fold(i, split_data)
+    test = test_fold(i, split_data, k)
     for (real_class, predictions) in test
       set_default(results, real_class, Dict())
       for (predicted_class, count) in predictions
@@ -72,7 +72,7 @@ end
 
 function pretty_results(results)
   for (real_class, predictions) in results
-    @printf "Predicition counts for %s:\n" real_class
+    @printf "Prediction counts for %s:\n" real_class
     for (predicted_class, count) in predictions
       @printf "\t%s => %s\n" predicted_class count
     end
