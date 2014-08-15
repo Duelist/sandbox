@@ -26,6 +26,45 @@ function load_training_set(path, class_field, data_fields, delimiter, header=fal
   return training_vector
 end
 
+function load_training_set_counts(path, class_field, data_fields, delimiter, header=false)
+  prior_dict = Dict()
+  count_dict = Dict()
+  total = 0
+  training_file = open(path)
+
+  try
+    for line in eachline(training_file)
+      if !header || i > 0
+        fields = split(line, delimiter)
+        class = strip(fields[class_field])
+        set_default(prior_dict, class, 0)
+        set_default(count_dict, class, Dict());
+        for data_field in data_fields
+          cleaned_field = strip(fields[data_field])
+          set_default(count_dict[class], cleaned_field, 0)
+          count_dict[class][cleaned_field] += 1
+        end
+        prior_dict[class] += 1
+        total += 1
+      end
+    end
+  finally
+    close(training_file)
+  end
+
+  # Calculate prior for each class
+  for (class, count) in prior_dict
+    prior_dict[class] = count / total;
+  end
+
+  # Calculate conditional probabilities
+  for class_dict in count_dict
+
+  end
+
+  return (prior_dict, count_dict)
+end
+
 function split_data_by_class(training_set, format=(Array{Float64}))
   class_dict = Dict()
   for (class, data) in training_set
