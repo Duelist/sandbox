@@ -26,10 +26,10 @@ function load_training_set(path, class_field, data_fields, delimiter, header=fal
   return training_vector
 end
 
-function load_training_set_counts(path, class_field, data_fields, delimiter, header=false)
+function load_training_bayes(path, class_field, data_fields, delimiter, header=false)
+  total = 0
   prior_dict = Dict()
   count_dict = Dict()
-  total = 0
   training_file = open(path)
 
   try
@@ -39,10 +39,11 @@ function load_training_set_counts(path, class_field, data_fields, delimiter, hea
         class = strip(fields[class_field])
         set_default(prior_dict, class, 0)
         set_default(count_dict, class, Dict());
-        for data_field in data_fields
+        for (index, data_field) in enumerate(data_fields)
           cleaned_field = strip(fields[data_field])
-          set_default(count_dict[class], cleaned_field, 0)
-          count_dict[class][cleaned_field] += 1
+          set_default(count_dict[class], index, Dict())
+          set_default(count_dict[class][index], cleaned_field, 0)
+          count_dict[class][index][cleaned_field] += 1
         end
         prior_dict[class] += 1
         total += 1
@@ -52,14 +53,18 @@ function load_training_set_counts(path, class_field, data_fields, delimiter, hea
     close(training_file)
   end
 
+  # Calculate conditional probabilities
+  for (class, class_dict) in count_dict
+    for (feature, feature_dict) in class_dict
+      for (feature_type, count) in feature_dict
+        count_dict[class][feature][feature_type] = count / prior_dict[class]
+      end
+    end
+  end
+
   # Calculate prior for each class
   for (class, count) in prior_dict
     prior_dict[class] = count / total;
-  end
-
-  # Calculate conditional probabilities
-  for class_dict in count_dict
-
   end
 
   return (prior_dict, count_dict)
