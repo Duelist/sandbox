@@ -12,3 +12,10 @@ function naive_bayes_classify(features, bayes_prior, bayes_cond)
   end
   return reduce((x, y) -> x[2] > y[2] ? x : y, class_probabilities)
 end
+
+function prob_density_function(mean, sample_std_dev, x)
+  denom = sqrt(2 * pi) * sample_std_dev
+  enum = -1 * ((x - mean) ^ 2)
+  edenom = 2 * (sample_std_dev ^ 2)
+  return (1 / denom) * (e ^ (enum / edenom))
+end
