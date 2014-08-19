@@ -26,10 +26,14 @@ function load_training_set(path, class_field, data_fields, delimiter, header=fal
   return training_vector
 end
 
-function load_training_bayes(path, class_field, data_fields, delimiter, header=false)
+function load_training_bayes(path, class_field, cat_data_fields, num_data_fields, delimiter, header=false)
   total = 0
   prior_dict = Dict()
+  cond_dict = Dict()
+  mean_dict = Dict()
+  std_dict = Dict()
   count_dict = Dict()
+  num_val_dict = Dict()
   training_file = open(path)
 
   try
@@ -38,12 +42,22 @@ function load_training_bayes(path, class_field, data_fields, delimiter, header=f
         fields = split(line, delimiter)
         class = strip(fields[class_field])
         set_default(prior_dict, class, 0)
+        set_default(cond_dict, class, Dict());
+        set_default(mean_dict, class, Dict());
+        set_default(std_dict, class, Dict());
         set_default(count_dict, class, Dict());
-        for (index, data_field) in enumerate(data_fields)
+        set_default(num_val_dict, class, Dict());
+        for (index, data_field) in enumerate(cat_data_fields)
           cleaned_field = strip(fields[data_field])
-          set_default(count_dict[class], index, Dict())
-          set_default(count_dict[class][index], cleaned_field, 0)
-          count_dict[class][index][cleaned_field] += 1
+          set_default(cond_dict[class], index, Dict())
+          set_default(cond_dict[class][index], cleaned_field, 0)
+          cond_dict[class][index][cleaned_field] += 1
+        end
+        for data_field in num_data_fields
+          set_default(count_dict[class], data_field, 0);
+          set_default(num_val_dict[class], data_field, Float64[]);
+          count_dict[class][data_field] += 1
+          push!(num_val_dict[class][data_field], float(fields[data_field]))
         end
         prior_dict[class] += 1
         total += 1
@@ -54,10 +68,10 @@ function load_training_bayes(path, class_field, data_fields, delimiter, header=f
   end
 
   # Calculate conditional probabilities
-  for (class, class_dict) in count_dict
+  for (class, class_dict) in cond_dict
     for (feature, feature_dict) in class_dict
       for (feature_type, count) in feature_dict
-        count_dict[class][feature][feature_type] = count / prior_dict[class]
+        cond_dict[class][feature][feature_type] = count / prior_dict[class]
       end
     end
   end
@@ -67,7 +81,16 @@ function load_training_bayes(path, class_field, data_fields, delimiter, header=f
     prior_dict[class] = count / total;
   end
 
-  return (prior_dict, count_dict)
+  # Calculate means and stds for each class
+  for (class, class_dict) in num_val_dict
+    set_default(mean_dict, class, Dict())
+    for (feature, feature_vec) in class_dict
+      set_default(mean_dict[class], feature, mean(feature_vec))
+      set_default(std_dict[class], feature, std(feature_vec))
+    end
+  end
+
+  return (prior_dict, cond_dict, mean_dict, std_dict)
 end
 
 function split_data_by_class(training_set, format=(Array{Float64}))
