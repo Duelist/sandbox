@@ -93,6 +93,32 @@ function load_training_bayes(path, class_field, cat_data_fields, num_data_fields
   return (prior_dict, cond_dict, mean_dict, std_dict)
 end
 
+function load_corpus(path, stopwordlist)
+  stop_words = Dict()
+  vocab = Dict()
+  prob = Dict()
+  totals = Dict()
+  
+  # Load stop word list
+  stop_word_file = open(stopwordlist)
+  try
+    for line in eachline(stopwordlist)
+      stop_words[strip(line)] = 1
+    end
+  finally
+    close(stop_word_file)
+  end
+
+  classes = filter(x -> isdir(string(path, x)), readdir(path))
+  for class in classes
+    (prob[class], totals[class]) = corpus_train(path, class)
+  end
+end
+
+function corpus_train(path, class)
+  
+end
+
 function split_data_by_class(training_set, format=(Array{Float64}))
   class_dict = Dict()
   for (class, data) in training_set
