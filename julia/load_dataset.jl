@@ -143,24 +143,23 @@ function load_corpus(path, stop_word_list_path)
   # Calculate probabilities
   @printf "--- Calculating probabilities ---\n\n"
   tic()
-  vocab_length = length(vocab)
+  vocab_length = sum(values(vocab))
   for (class, class_dict) in prob
     denom = totals[class] + vocab_length
     for (word, count) in vocab
-      class_count = 1
+      word_count = 1
       if word in keys(class_dict)
-        class_count = count
+        word_count = class_dict[word]
       end
-      prob[class][word] = float(class_count + 1) / denom
+      prob[class][word] = float(word_count + 1) / denom
     end
   end
   toc()
 
-  return prob
+  return (classes, vocab, prob, totals)
 end
 
 function corpus_train(path, class, stop_word_dict)
-  @printf "Training..." 
   count_dict = Dict()
   total = 0
   class_path = string(path, class, '/')
@@ -170,12 +169,14 @@ function corpus_train(path, class, stop_word_dict)
     file = open(string(class_path, file_name))
     try
       for line in eachline(file)
-        tokens = map(lowercase, filter(is_valid_ascii, map(token -> strip(token, ['\'', '"', '.', ',', '?', ':', '-']), split(line))))
-        for token in tokens
-          if (token != "" && !(token in keys(stop_word_dict)))
-            set_default(count_dict, token, 0)
-            count_dict[token] += 1
-            total += 1
+        if is_valid_ascii(line)
+          tokens = map(lowercase, map(token -> strip(token, ['\'', '"', '.', ',', '?', ':', '-']), split(line)))
+          for token in tokens
+            if (token != "" && !(token in keys(stop_word_dict)))
+              set_default(count_dict, token, 0)
+              count_dict[token] += 1
+              total += 1
+            end
           end
         end
       end
@@ -183,7 +184,6 @@ function corpus_train(path, class, stop_word_dict)
       close(file)
     end
   end
-  @printf " complete.\n" 
   return (count_dict, total)
 end
 
