@@ -93,30 +93,98 @@ function load_training_bayes(path, class_field, cat_data_fields, num_data_fields
   return (prior_dict, cond_dict, mean_dict, std_dict)
 end
 
-function load_corpus(path, stopwordlist)
+function load_corpus(path, stop_word_list_path)
   stop_words = Dict()
   vocab = Dict()
   prob = Dict()
   totals = Dict()
   
   # Load stop word list
-  stop_word_file = open(stopwordlist)
+  stop_word_file = open(stop_word_list_path)
   try
-    for line in eachline(stopwordlist)
+    for line in eachline(stop_word_file)
       stop_words[strip(line)] = 1
     end
   finally
     close(stop_word_file)
   end
 
+  # Train each class
+  @printf "--- Training ---\n\n"
+  tic()
   classes = filter(x -> isdir(string(path, x)), readdir(path))
   for class in classes
-    (prob[class], totals[class]) = corpus_train(path, class)
+    (prob[class], totals[class]) = corpus_train(path, class, stop_words)
   end
+  toc()
+
+  # Prune words with counts < 3 and create vocabulary
+  @printf "--- Pruning ---\n\n"
+  tic()
+  for (class, class_dict) in prob
+    for (word, count) in class_dict
+      if count < 3
+        delete!(prob[class], word)
+      end
+    end
+  end
+  toc()
+
+  @printf "--- Creating vocab ---\n\n"
+  tic()
+  for (class, class_dict) in prob
+    for (word, count) in class_dict
+      set_default(vocab, word, 0)
+      vocab[word] += 1
+    end
+  end
+  toc()
+
+  # Calculate probabilities
+  @printf "--- Calculating probabilities ---\n\n"
+  tic()
+  vocab_length = length(vocab)
+  for (class, class_dict) in prob
+    denom = totals[class] + vocab_length
+    for (word, count) in vocab
+      class_count = 1
+      if word in keys(class_dict)
+        class_count = count
+      end
+      prob[class][word] = float(class_count + 1) / denom
+    end
+  end
+  toc()
+
+  return prob
 end
 
-function corpus_train(path, class)
-  
+function corpus_train(path, class, stop_word_dict)
+  @printf "Training..." 
+  count_dict = Dict()
+  total = 0
+  class_path = string(path, class, '/')
+
+  corpus_files = filter(file_name -> isfile(string(class_path, file_name)), readdir(class_path))
+  for file_name in corpus_files
+    file = open(string(class_path, file_name))
+    try
+      for line in eachline(file)
+        tokens = map(lowercase, filter(is_valid_ascii, map(token -> strip(token, ['\'', '"', '.', ',', '?', ':', '-']), split(line))))
+        for token in tokens
+          if (token != "" && !(token in keys(stop_word_dict)))
+            set_default(count_dict, token, 0)
+            count_dict[token] += 1
+            total += 1
+          end
+        end
+      end
+    finally
+      close(file)
+    end
+  end
+  @printf " complete.\n" 
+  return (count_dict, total)
 end
 
 function split_data_by_class(training_set, format=(Array{Float64}))
